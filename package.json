@@ -1,0 +1,59 @@
+{
+  "name": "openclaw-bytedance",
+  "version": "0.1.0",
+  "description": "OpenClaw plugin for ByteDance Volcengine Ark: web search and image understanding (doubao-seed-2.0-pro)",
+  "type": "module",
+  "license": "MIT",
+  "author": "",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/scotthuang/openclaw-bytedance"
+  },
+  "keywords": [
+    "openclaw",
+    "openclaw-plugin",
+    "bytedance",
+    "volcengine",
+    "ark",
+    "doubao",
+    "web-search",
+    "image-understanding",
+    "vision"
+  ],
+  "main": "./index.ts",
+  "files": [
+    "index.ts",
+    "openclaw.plugin.json",
+    "src",
+    "tsconfig.json",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "compare": "tsx scripts/compare-with-minimax.ts",
+    "compare:search": "tsx scripts/compare-with-minimax.ts --only=search",
+    "compare:vision": "tsx scripts/compare-with-minimax.ts --only=vision",
+    "typecheck": "tsc --noEmit"
+  },
+  "peerDependencies": {
+    "openclaw": "*"
+  },
+  "peerDependenciesMeta": {
+    "openclaw": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.4.0",
+    "vitest": "^2.1.0"
+  },
+  "openclaw": {
+    "extensions": [
+      "./index.ts"
+    ]
+  }
+}

@@ -1,0 +1,82 @@
+{
+  "id": "bytedance",
+  "activation": {
+    "onStartup": false
+  },
+  "enabledByDefault": true,
+  "providers": ["bytedance"],
+  "autoEnableWhenConfiguredProviders": ["bytedance"],
+  "providerAuthEnvVars": {
+    "bytedance": ["ARK_API_KEY", "ARK_SEARCH_API_KEY"]
+  },
+  "contracts": {
+    "mediaUnderstandingProviders": ["bytedance"],
+    "webSearchProviders": ["bytedance"]
+  },
+  "mediaUnderstandingProviderMetadata": {
+    "bytedance": {
+      "capabilities": ["image"],
+      "defaultModels": {
+        "image": "doubao-seed-2.0-pro"
+      },
+      "autoPriority": {
+        "image": 45
+      }
+    }
+  },
+  "uiHints": {
+    "webSearch.apiKey": {
+      "label": "Ark Harness search API key",
+      "help": "Volcengine Ark Harness search API key (from Agent Plan → 配置 Harness → 联网 API Key). Falls back to ARK_SEARCH_API_KEY / ASK_ECHO_SEARCH_INFINITY_API_KEY env vars.",
+      "sensitive": true,
+      "placeholder": "<harness-search-key>"
+    },
+    "webSearch.baseUrl": {
+      "label": "Search Base URL",
+      "help": "Optional. Defaults to https://open.feedcoopapi.com (set ARK_SEARCH_BASE_URL to override)."
+    },
+    "webSearch.searchType": {
+      "label": "Default search type",
+      "help": "Optional. 'web' (default) or 'image'."
+    },
+    "vision.apiKey": {
+      "label": "Volcengine Ark API key",
+      "help": "Volcengine Ark API key for chat/vision (Agent Plan). Falls back to ARK_API_KEY env var.",
+      "sensitive": true,
+      "placeholder": "ark-..."
+    },
+    "vision.baseUrl": {
+      "label": "Ark Base URL (vision)",
+      "help": "Optional. Defaults to https://ark.cn-beijing.volces.com/api/plan/v3 (set ARK_BASE_URL to override)."
+    },
+    "vision.model": {
+      "label": "Vision Model",
+      "help": "Optional. Model used for image understanding. Defaults to doubao-seed-2.0-pro."
+    }
+  },
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "webSearch": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "apiKey": { "type": ["string", "object"] },
+          "baseUrl": { "type": "string" },
+          "searchType": { "type": "string", "enum": ["web", "image"] },
+          "timeRange": { "type": "string" }
+        }
+      },
+      "vision": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "apiKey": { "type": ["string", "object"] },
+          "baseUrl": { "type": "string" },
+          "model": { "type": "string" }
+        }
+      }
+    }
+  }
+}
