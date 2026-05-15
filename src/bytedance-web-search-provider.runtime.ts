@@ -1,7 +1,6 @@
 import {
   createProviderHttpError,
   formatProviderHttpErrorMessage,
-  readProviderJsonResponse,
 } from "openclaw/plugin-sdk/provider-http";
 import {
   buildSearchCacheKey,
@@ -27,6 +26,7 @@ import {
   resolveArkSearchApiKey,
   resolveArkSearchBaseUrl,
 } from "./credentials.js";
+import { formatErr, log } from "./logger.js";
 
 /**
  * ByteDance (Volcengine Ark) web-search provider runtime.
@@ -110,6 +110,11 @@ type ExtractedReference = {
 function readSearchType(value: unknown): SearchType | undefined {
   if (value === "web" || value === "image") return value;
   return undefined;
+}
+
+function truncate(text: string, max: number): string {
+  if (typeof text !== "string") return "";
+  return text.length > max ? `${text.slice(0, max)}…` : text;
 }
 
 function resolveSearchType(
@@ -219,7 +224,13 @@ async function runAskEchoSearch(params: {
   timeoutSeconds: number;
 }): Promise<AskEchoSearchResponse> {
   const endpoint = buildArkEndpoint(params.baseUrl, SEARCH_PATH);
+  log.debug(
+    `web_search: POST ${endpoint} type=${params.body.SearchType} count=${params.body.Count} ` +
+      `timeRange=${params.body.TimeRange ?? "-"} authLevel=${params.body.Filter?.AuthInfoLevel ?? 0} ` +
+      `query="${truncate(params.body.Query, 80)}" timeoutSec=${params.timeoutSeconds}`,
+  );
 
+  const startedAt = Date.now();
   return withTrustedWebSearchEndpoint(
     {
       url: endpoint,
@@ -236,22 +247,54 @@ async function runAskEchoSearch(params: {
       },
     },
     async (res) => {
+      const elapsed = Date.now() - startedAt;
       if (!res.ok) {
+        log.warn(
+          `web_search: HTTP ${res.status} from ${endpoint} after ${elapsed}ms ` +
+            `(query="${truncate(params.body.Query, 60)}")`,
+        );
         throw await createProviderHttpError(res, "Volcengine Ark Web Search error");
       }
-      const data = await readProviderJsonResponse<AskEchoSearchResponse>(
-        res,
-        "Volcengine Ark Web Search error",
-      );
+      let data: AskEchoSearchResponse;
+      try {
+        // Use the standard fetch Response#json() so we don't depend on a
+        // specific openclaw/plugin-sdk/provider-http export (which has been
+        // unstable across versions). The malformed-JSON fallback message is
+        // preserved for parity with provider-http error formatting.
+        data = (await res.json()) as AskEchoSearchResponse;
+      } catch (err) {
+        log.error(
+          `web_search: malformed JSON from ${endpoint} after ${elapsed}ms: ${formatErr(err)}`,
+        );
+        throw new Error(
+          `Volcengine Ark Web Search error: malformed JSON response (${formatErr(err)})`,
+          { cause: err instanceof Error ? err : undefined },
+        );
+      }
       if (data.error?.message) {
+        log.warn(
+          `web_search: provider returned error envelope (code=${data.error.code ?? "?"}, ` +
+            `type=${data.error.type ?? "?"}): ${truncate(data.error.message, 200)}`,
+        );
         throw new Error(
           formatProviderHttpErrorMessage({
             label: "Volcengine Ark Web Search error",
-            status: typeof data.error.code === "number" ? data.error.code : undefined,
+            status: typeof data.error.code === "number" ? data.error.code : 0,
             detail: data.error.message,
           }),
         );
       }
+      const resultsLen = Array.isArray(
+        params.body.SearchType === "image" ? data.Result?.ImageResults : data.Result?.WebResults,
+      )
+        ? (params.body.SearchType === "image"
+            ? data.Result!.ImageResults!.length
+            : data.Result!.WebResults!.length)
+        : 0;
+      log.debug(
+        `web_search: HTTP 200 in ${elapsed}ms requestId=${data.ResponseMetadata?.RequestId ?? "-"} ` +
+          `rawResults=${resultsLen}`,
+      );
       return data;
     },
   );
@@ -273,6 +316,7 @@ export async function executeByteDanceWebSearchProviderTool(
   ctx: { config?: Record<string, unknown>; searchConfig?: SearchConfigRecord },
   args: Record<string, unknown>,
 ): Promise<Record<string, unknown>> {
+  const invokeStartedAt = Date.now();
   const searchConfig = mergeScopedSearchConfig(
     ctx.searchConfig,
     "bytedance",
@@ -286,6 +330,10 @@ export async function executeByteDanceWebSearchProviderTool(
   );
   const apiKey = resolveArkSearchApiKey(explicitApiKey);
   if (!apiKey) {
+    log.warn(
+      "web_search: missing ARK_SEARCH_API_KEY (and no plugins.entries.bytedance.config.webSearch.apiKey); " +
+        "returning structured missing_ark_search_api_key payload",
+    );
     return missingApiKeyPayload();
   }
 
@@ -295,19 +343,37 @@ export async function executeByteDanceWebSearchProviderTool(
   const queryRaw = readStringParam(args, "query", { required: true });
   const query = queryRaw.trim();
   if (query.length === 0) {
+    log.warn("web_search: rejected empty query");
     throw new Error("query must not be empty");
   }
   if (query.length > MAX_QUERY_LENGTH) {
+    log.warn(
+      `web_search: rejected oversize query (len=${query.length}, max=${MAX_QUERY_LENGTH})`,
+    );
     throw new Error(`query length must be 1-${MAX_QUERY_LENGTH} characters`);
   }
 
   const searchType = resolveSearchType(args, searchConfig);
   const requestedCount = readNumberParam(args, "count", { integer: true });
   const count = clampCount(requestedCount ?? searchConfig?.maxResults, searchType);
-  const timeRange =
-    readTimeRange(args.timeRange) ?? readTimeRange(args.time_range) ?? readTimeRange(searchConfig?.timeRange);
+  let timeRange: string | undefined;
+  try {
+    timeRange =
+      readTimeRange(args.timeRange) ??
+      readTimeRange(args.time_range) ??
+      readTimeRange(searchConfig?.timeRange);
+  } catch (err) {
+    log.warn(`web_search: invalid timeRange parameter: ${formatErr(err)}`);
+    throw err;
+  }
   const authLevel = resolveAuthLevel(args);
   const filter = authLevel > 0 ? { AuthInfoLevel: authLevel } : undefined;
+
+  log.debug(
+    `web_search: invoke type=${searchType} count=${count} requested=${requestedCount ?? "-"} ` +
+      `timeRange=${timeRange ?? "-"} authLevel=${authLevel} baseUrl=${baseUrl} ` +
+      `query="${truncate(query, 80)}"`,
+  );
 
   const cacheKey = buildSearchCacheKey([
     "bytedance",
@@ -319,34 +385,49 @@ export async function executeByteDanceWebSearchProviderTool(
     authLevel,
   ]);
   const cached = readCachedSearchPayload(cacheKey);
-  if (cached) return cached;
+  if (cached) {
+    log.debug(
+      `web_search: cache hit (key=${cacheKey.slice(0, 16)}…) skipping HTTP for query="${truncate(query, 60)}"`,
+    );
+    return cached;
+  }
 
   const start = Date.now();
   const timeoutSeconds = resolveSearchTimeoutSeconds(searchConfig);
   const cacheTtlMs = resolveSearchCacheTtlMs(searchConfig);
 
-  const data = await runAskEchoSearch({
-    apiKey,
-    baseUrl,
-    body: {
-      Query: query,
-      SearchType: searchType,
-      Count: count,
-      NeedSummary: searchType === "web" ? true : undefined,
-      TimeRange: timeRange,
-      Filter: filter,
-    },
-    timeoutSeconds,
-  });
+  let data: AskEchoSearchResponse;
+  try {
+    data = await runAskEchoSearch({
+      apiKey,
+      baseUrl,
+      body: {
+        Query: query,
+        SearchType: searchType,
+        Count: count,
+        NeedSummary: searchType === "web" ? true : undefined,
+        TimeRange: timeRange,
+        Filter: filter,
+      },
+      timeoutSeconds,
+    });
+  } catch (err) {
+    log.error(
+      `web_search: request failed after ${Date.now() - start}ms ` +
+        `(query="${truncate(query, 60)}"): ${formatErr(err)}`,
+    );
+    throw err;
+  }
 
   const references = extractReferences(data, searchType, count);
 
+  const tookMs = Date.now() - start;
   const payload: Record<string, unknown> = {
     query,
     provider: "bytedance",
     searchType,
     count: references.length,
-    tookMs: Date.now() - start,
+    tookMs,
     requestId: data.ResponseMetadata?.RequestId,
     externalContent: {
       untrusted: true,
@@ -359,6 +440,12 @@ export async function executeByteDanceWebSearchProviderTool(
   if (timeRange) payload.timeRange = timeRange;
 
   writeCachedSearchPayload(cacheKey, payload, cacheTtlMs);
+  log.info(
+    `web_search: ok type=${searchType} returned=${references.length}/${count} ` +
+      `tookMs=${tookMs} totalMs=${Date.now() - invokeStartedAt} ` +
+      `requestId=${data.ResponseMetadata?.RequestId ?? "-"} ` +
+      `query="${truncate(query, 60)}"`,
+  );
   return payload;
 }
 

@@ -1,4 +1,4 @@
-# openclaw-bytedance
+# @scotthuang/openclaw-bytedance
 
 > OpenClaw plugin for **ByteDance Volcengine Ark** — adds two tools to your OpenClaw agent:
 >
@@ -35,13 +35,30 @@ You can configure either, both, or neither. Tools whose key is missing return a 
 
 ## Installation
 
+End users (let OpenClaw install it from npm):
+
+```bash
+# inside your OpenClaw config / extension manager
+# add @scotthuang/openclaw-bytedance to the plugins list
+```
+
+Or globally:
+
+```bash
+npm install -g @scotthuang/openclaw-bytedance
+```
+
+Local development:
+
 ```bash
 git clone https://github.com/scotthuang/openclaw-bytedance.git ~/github/openclaw-bytedance
 cd ~/github/openclaw-bytedance
-pnpm install
+npm install
+# Link a local OpenClaw checkout for type resolution + tests
+# (override OPENCLAW_REPO if it lives somewhere other than ../openclaw)
+npm run setup:openclaw
+npm run build
 ```
-
-Then register the plugin with your OpenClaw installation. The exact mechanism depends on your deployment.
 
 ---
 

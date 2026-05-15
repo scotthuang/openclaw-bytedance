@@ -1,6 +1,6 @@
 {
-  "name": "openclaw-bytedance",
-  "version": "0.1.0",
+  "name": "@scotthuang/openclaw-bytedance",
+  "version": "0.1.1",
   "description": "OpenClaw plugin for ByteDance Volcengine Ark: web search and image understanding (doubao-seed-2.0-pro)",
   "type": "module",
   "license": "MIT",
@@ -20,16 +20,21 @@
     "image-understanding",
     "vision"
   ],
-  "main": "./index.ts",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "files": [
-    "index.ts",
+    "dist",
+    "!dist/**/*.test.js",
+    "!dist/**/*.test.d.ts",
+    "!dist/**/*.test.js.map",
     "openclaw.plugin.json",
-    "src",
-    "tsconfig.json",
     "README.md",
     "LICENSE"
   ],
   "scripts": {
+    "setup:openclaw": "npm install --save-dev --no-save file:${OPENCLAW_REPO:-../openclaw}",
+    "build": "tsc -p tsconfig.build.json",
+    "prepublishOnly": "npm run build",
     "test": "vitest run",
     "test:watch": "vitest",
     "compare": "tsx scripts/compare-with-minimax.ts",
@@ -53,7 +58,7 @@
   },
   "openclaw": {
     "extensions": [
-      "./index.ts"
+      "./dist/index.js"
     ]
   }
 }
