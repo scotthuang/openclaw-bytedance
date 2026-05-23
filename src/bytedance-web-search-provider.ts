@@ -92,11 +92,11 @@ export function createByteDanceWebSearchProvider(): WebSearchProviderPlugin {
       searchCredential: { type: "top-level" },
       configuredCredential: { pluginId: "bytedance" },
     }),
-    createTool: (ctx) => ({
+    createTool: (ctx: any) => ({
       description:
         "Search the web (or images) using Volcengine Ark Harness. Returns titles, URLs, snippets, summaries, and publish dates.",
       parameters: ByteDanceSearchSchema,
-      execute: async (args) => {
+      execute: async (args: any) => {
         const { executeByteDanceWebSearchProviderTool } = await loadRuntime();
         return await executeByteDanceWebSearchProviderTool(ctx, args);
       },

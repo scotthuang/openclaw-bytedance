@@ -365,7 +365,7 @@ async function describeImages(req: ImagesDescriptionRequest): Promise<ImagesDesc
   const prompt = (req.prompt && req.prompt.trim().length > 0 ? req.prompt : DEFAULT_PROMPT).trim();
   const maxTokens = req.maxTokens && req.maxTokens > 0 ? req.maxTokens : DEFAULT_MAX_TOKENS;
 
-  const totalBytes = req.images.reduce((acc, img) => acc + (img?.buffer?.length ?? 0), 0);
+  const totalBytes = req.images.reduce((acc: any, img: any) => acc + (img?.buffer?.length ?? 0), 0);
   log.debug(
     `vision: describeImages model=${model} count=${req.images.length} totalBytes=${totalBytes} ` +
       `prompt="${truncate(prompt, 80)}" timeoutMs=${req.timeoutMs} max_tokens=${maxTokens}`,

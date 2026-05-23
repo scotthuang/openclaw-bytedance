@@ -15,9 +15,11 @@
     "sourceMap": true,
     "outDir": "./dist",
     "rootDir": ".",
-    "types": ["node"]
+    "paths": {
+      "openclaw/*": ["./types/openclaw/*"]
+    }
   },
-  "include": ["./index.ts", "./src/**/*.ts"],
+  "include": ["./index.ts", "./src/**/*.ts", "./types/**/*.d.ts"],
   "exclude": [
     "./node_modules/**",
     "./dist/**",

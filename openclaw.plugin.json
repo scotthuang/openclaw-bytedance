@@ -6,8 +6,13 @@
   "enabledByDefault": true,
   "providers": ["bytedance"],
   "autoEnableWhenConfiguredProviders": ["bytedance"],
-  "providerAuthEnvVars": {
-    "bytedance": ["ARK_API_KEY", "ARK_SEARCH_API_KEY"]
+  "setup": {
+    "providers": [
+      {
+        "id": "bytedance",
+        "envVars": ["ARK_API_KEY", "ARK_SEARCH_API_KEY"]
+      }
+    ]
   },
   "contracts": {
     "mediaUnderstandingProviders": ["bytedance"],

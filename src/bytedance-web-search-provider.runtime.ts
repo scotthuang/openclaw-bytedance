@@ -246,7 +246,7 @@ async function runAskEchoSearch(params: {
         body: JSON.stringify(buildPayload(params.body)),
       },
     },
-    async (res) => {
+    async (res: any) => {
       const elapsed = Date.now() - startedAt;
       if (!res.ok) {
         log.warn(
@@ -341,7 +341,7 @@ export async function executeByteDanceWebSearchProviderTool(
 
   // Validate query
   const queryRaw = readStringParam(args, "query", { required: true });
-  const query = queryRaw.trim();
+  const query = queryRaw!.trim();
   if (query.length === 0) {
     log.warn("web_search: rejected empty query");
     throw new Error("query must not be empty");
