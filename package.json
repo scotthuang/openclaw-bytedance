@@ -29,6 +29,7 @@
     "!dist/**/*.test.d.ts",
     "!dist/**/*.test.js.map",
     "openclaw.plugin.json",
+    "openclaw.plugin-search.json",
     "README.md",
     "LICENSE"
   ],
