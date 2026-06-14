@@ -1,6 +1,6 @@
 {
   "name": "@scotthuang/openclaw-bytedance",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "OpenClaw plugin for ByteDance Volcengine Ark: web search and image understanding (doubao-seed-2.0-pro)",
   "type": "module",
   "license": "MIT",
