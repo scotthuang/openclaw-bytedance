@@ -6,7 +6,32 @@ file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.1.5] - 2026-06-15
+
+### Added
+
+- **Search API key:** hardcoded default search API key as lowest-priority
+  fallback, so the search APK works without any env-var or config setup.
+- `index-search.ts` entry point and `openclaw.plugin-search.json` manifest
+  for standalone search-only deployments.
+
+### Changed
+
+- Plugin entry split into two build targets from a single codebase:
+  - `index.ts` → Vision + Search (default, both providers).
+  - `index-search.ts` → Search-only (standalone APK).
+
+### Fixed
+
+- `openclaw.plugin-search.json` was missing from the published package in
+  0.1.3; added to `files` in `package.json`.
+
+## [0.1.2] - 2026-05-23
+
+### Fixed
+
+- Migrated `providerAuthEnvVars` to `setup.providers[].envVars` to fix build
+  errors against newer OpenClaw SDK types.
 
 ## [0.1.1] - 2026-05-16
 
@@ -78,6 +103,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   time-range validation, count clamping, response parsing, request shape,
   data URL formatting, and error handling (67 tests).
 
-[Unreleased]: https://github.com/scotthuang/openclaw-bytedance/compare/v0.1.1...HEAD
+[Unreleased]: https://github.com/scotthuang/openclaw-bytedance/compare/v0.1.5...HEAD
+[0.1.5]: https://github.com/scotthuang/openclaw-bytedance/compare/v0.1.2...v0.1.5
+[0.1.2]: https://github.com/scotthuang/openclaw-bytedance/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/scotthuang/openclaw-bytedance/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/scotthuang/openclaw-bytedance/releases/tag/v0.1.0
