@@ -1,21 +1,21 @@
 {
-  "id": "bytedance-search",
+  "id": "bytedance",
   "activation": {
     "onStartup": false
   },
   "enabledByDefault": true,
-  "providers": ["bytedance-search"],
-  "autoEnableWhenConfiguredProviders": ["bytedance-search"],
+  "providers": ["bytedance"],
+  "autoEnableWhenConfiguredProviders": ["bytedance"],
   "setup": {
     "providers": [
       {
-        "id": "bytedance-search",
+        "id": "bytedance",
         "envVars": ["ARK_SEARCH_API_KEY"]
       }
     ]
   },
   "contracts": {
-    "webSearchProviders": ["bytedance-search"]
+    "webSearchProviders": ["bytedance"]
   },
   "uiHints": {
     "webSearch.apiKey": {

@@ -4,7 +4,7 @@ import { createByteDanceWebSearchProvider } from "./src/bytedance-web-search-pro
 import { setPluginLogger } from "./src/logger.js";
 
 export default definePluginEntry({
-  id: "bytedance-search",
+  id: "bytedance",
   name: "ByteDance Volcengine Search",
   description:
     "OpenClaw plugin for ByteDance Volcengine Ark: web search with pre-configured API key.",
