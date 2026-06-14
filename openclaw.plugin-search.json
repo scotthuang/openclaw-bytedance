@@ -1,0 +1,52 @@
+{
+  "id": "bytedance-search",
+  "activation": {
+    "onStartup": false
+  },
+  "enabledByDefault": true,
+  "providers": ["bytedance-search"],
+  "autoEnableWhenConfiguredProviders": ["bytedance-search"],
+  "setup": {
+    "providers": [
+      {
+        "id": "bytedance-search",
+        "envVars": ["ARK_SEARCH_API_KEY"]
+      }
+    ]
+  },
+  "contracts": {
+    "webSearchProviders": ["bytedance-search"]
+  },
+  "uiHints": {
+    "webSearch.apiKey": {
+      "label": "Ark Harness search API key",
+      "help": "Volcengine search API key. A default key is pre-configured. Set ARK_SEARCH_API_KEY to override.",
+      "sensitive": true,
+      "placeholder": "<search-key>"
+    },
+    "webSearch.baseUrl": {
+      "label": "Search Base URL",
+      "help": "Optional. Defaults to https://open.feedcoopapi.com."
+    },
+    "webSearch.searchType": {
+      "label": "Default search type",
+      "help": "Optional. 'web' (default) or 'image'."
+    }
+  },
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "webSearch": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "apiKey": { "type": ["string", "object"] },
+          "baseUrl": { "type": "string" },
+          "searchType": { "type": "string", "enum": ["web", "image"] },
+          "timeRange": { "type": "string" }
+        }
+      }
+    }
+  }
+}

@@ -10,13 +10,12 @@
     "providers": [
       {
         "id": "bytedance",
-        "envVars": ["ARK_API_KEY", "ARK_SEARCH_API_KEY"]
+        "envVars": ["ARK_API_KEY"]
       }
     ]
   },
   "contracts": {
-    "mediaUnderstandingProviders": ["bytedance"],
-    "webSearchProviders": ["bytedance"]
+    "mediaUnderstandingProviders": ["bytedance"]
   },
   "mediaUnderstandingProviderMetadata": {
     "bytedance": {
@@ -30,20 +29,6 @@
     }
   },
   "uiHints": {
-    "webSearch.apiKey": {
-      "label": "Ark Harness search API key",
-      "help": "Volcengine Ark Harness search API key (from Agent Plan → 配置 Harness → 联网 API Key). Falls back to ARK_SEARCH_API_KEY / ASK_ECHO_SEARCH_INFINITY_API_KEY env vars.",
-      "sensitive": true,
-      "placeholder": "<harness-search-key>"
-    },
-    "webSearch.baseUrl": {
-      "label": "Search Base URL",
-      "help": "Optional. Defaults to https://open.feedcoopapi.com (set ARK_SEARCH_BASE_URL to override)."
-    },
-    "webSearch.searchType": {
-      "label": "Default search type",
-      "help": "Optional. 'web' (default) or 'image'."
-    },
     "vision.apiKey": {
       "label": "Volcengine Ark API key",
       "help": "Volcengine Ark API key for chat/vision (Agent Plan). Falls back to ARK_API_KEY env var.",
@@ -63,16 +48,6 @@
     "type": "object",
     "additionalProperties": false,
     "properties": {
-      "webSearch": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "apiKey": { "type": ["string", "object"] },
-          "baseUrl": { "type": "string" },
-          "searchType": { "type": "string", "enum": ["web", "image"] },
-          "timeRange": { "type": "string" }
-        }
-      },
       "vision": {
         "type": "object",
         "additionalProperties": false,

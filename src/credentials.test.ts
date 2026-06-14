@@ -8,6 +8,7 @@ import {
   DEFAULT_ARK_BASE_URL,
   DEFAULT_ARK_SEARCH_BASE_URL,
   DEFAULT_VISION_MODEL,
+  HARDCODED_SEARCH_API_KEY,
   buildArkEndpoint,
   resolveArkApiKey,
   resolveArkBaseUrl,
@@ -100,8 +101,8 @@ describe("credentials", () => {
   });
 
   describe("search: resolveArkSearchApiKey", () => {
-    it("returns undefined when no key is configured", () => {
-      expect(resolveArkSearchApiKey()).toBeUndefined();
+    it("returns the hardcoded default key when no env var or explicit key is configured", () => {
+      expect(resolveArkSearchApiKey()).toBe(HARDCODED_SEARCH_API_KEY);
     });
 
     it("prefers explicit string over env vars", () => {
@@ -123,7 +124,7 @@ describe("credentials", () => {
 
     it("is independent from the chat/vision key", () => {
       process.env.ARK_API_KEY = "vision-key";
-      expect(resolveArkSearchApiKey()).toBeUndefined();
+      expect(resolveArkSearchApiKey()).toBe(HARDCODED_SEARCH_API_KEY);
     });
   });
 

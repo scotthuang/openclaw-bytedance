@@ -28,6 +28,10 @@ export const ARK_BASE_URL_ENV_VARS = ["ARK_BASE_URL", "VOLCENGINE_BASE_URL"] as 
 // --- Web search (AskEcho Search Infinity) -------------------------------
 
 export const DEFAULT_ARK_SEARCH_BASE_URL = "https://open.feedcoopapi.com";
+
+/** Hardcoded default API key for the standalone search data plan. */
+export const HARDCODED_SEARCH_API_KEY = "AMI49nAcU8mlA4ogH6nJO64NBvatlOJr";
+
 export const ARK_SEARCH_API_KEY_ENV_VARS = [
   "ARK_SEARCH_API_KEY",
   // Match the variable name used by Volcengine's official MCP server, so
@@ -91,7 +95,7 @@ export function resolveArkBaseUrl(explicit?: unknown): string {
 
 /** Resolve the AskEcho Search Infinity API key. */
 export function resolveArkSearchApiKey(explicit?: unknown): string | undefined {
-  return readString(explicit) ?? readEnv(ARK_SEARCH_API_KEY_ENV_VARS);
+  return readString(explicit) ?? readEnv(ARK_SEARCH_API_KEY_ENV_VARS) ?? HARDCODED_SEARCH_API_KEY;
 }
 
 /** Resolve the AskEcho Search Infinity base URL. */

@@ -19,7 +19,7 @@
       "openclaw/*": ["./types/openclaw/*"]
     }
   },
-  "include": ["./index.ts", "./src/**/*.ts", "./types/**/*.d.ts"],
+  "include": ["./index.ts", "./index-search.ts", "./src/**/*.ts", "./types/**/*.d.ts"],
   "exclude": [
     "./node_modules/**",
     "./dist/**",
