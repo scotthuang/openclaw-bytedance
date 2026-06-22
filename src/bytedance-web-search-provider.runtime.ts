@@ -41,7 +41,7 @@ import { formatErr, log } from "./logger.js";
  *   X-Traffic-Tag: ark_mcp_server_<tag>
  *   { "Query": "...", "SearchType": "web", "Count": 10, "NeedSummary": true,
  *     "TimeRange": "OneDay|OneWeek|OneMonth|OneYear|YYYY-MM-DD..YYYY-MM-DD",
- *     "Filter": { "AuthInfoLevel": 0|1 } }
+ *     "Filter": { "NeedContent": false, "NeedUrl": true, "AuthInfoLevel": 0|1 } }
  *
  * Note: Search requires its **own** API key, separate from the chat key:
  *   - Vision/chat key  → ARK_API_KEY  → Authorization for /api/plan/v3/*
@@ -70,7 +70,13 @@ type AskEchoWebSearchRequest = {
   Count: number;
   NeedSummary?: boolean;
   TimeRange?: string;
-  Filter?: { AuthInfoLevel?: number };
+  Filter?: {
+    NeedContent?: boolean;
+    NeedUrl?: boolean;
+    Sites?: string;
+    BlockHosts?: string;
+    AuthInfoLevel?: number;
+  };
 };
 
 type AskEchoSearchResult = {
@@ -88,7 +94,10 @@ type AskEchoSearchResult = {
 };
 
 type AskEchoSearchResponse = {
-  ResponseMetadata?: { RequestId?: string };
+  ResponseMetadata?: {
+    RequestId?: string;
+    Error?: { CodeN?: number; Code?: string; Message?: string };
+  };
   Result?: {
     ResultCount?: number;
     WebResults?: AskEchoSearchResult[];
@@ -173,7 +182,13 @@ function buildPayload(req: AskEchoWebSearchRequest): Record<string, unknown> {
   };
   if (req.SearchType === "web") {
     payload.NeedSummary = true;
-    if (req.Filter) payload.Filter = req.Filter;
+    payload.Filter = {
+      NeedContent: false,
+      NeedUrl: true,
+      AuthInfoLevel: req.Filter?.AuthInfoLevel ?? 0,
+      ...(req.Filter?.Sites ? { Sites: req.Filter.Sites } : {}),
+      ...(req.Filter?.BlockHosts ? { BlockHosts: req.Filter.BlockHosts } : {}),
+    };
     if (req.TimeRange) payload.TimeRange = req.TimeRange;
   }
   return payload;
@@ -284,6 +299,22 @@ async function runAskEchoSearch(params: {
           }),
         );
       }
+      const responseError = data.ResponseMetadata?.Error;
+      if (responseError?.Message) {
+        log.warn(
+          `web_search: provider returned ResponseMetadata.Error ` +
+            `(code=${responseError.Code ?? responseError.CodeN ?? "?"}, ` +
+            `requestId=${data.ResponseMetadata?.RequestId ?? "-"}): ` +
+            truncate(responseError.Message, 200),
+        );
+        throw new Error(
+          formatProviderHttpErrorMessage({
+            label: "Volcengine Ark Web Search error",
+            status: responseError.CodeN ?? (Number(responseError.Code) || 0),
+            detail: responseError.Message,
+          }),
+        );
+      }
       const resultsLen = Array.isArray(
         params.body.SearchType === "image" ? data.Result?.ImageResults : data.Result?.WebResults,
       )
@@ -312,6 +343,22 @@ function missingApiKeyPayload(): Record<string, unknown> {
   };
 }
 
+function readOptionalConfiguredSecretString(value: unknown, path: string): string | undefined {
+  try {
+    return readConfiguredSecretString(value, path);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    if (message.includes("unresolved SecretRef")) {
+      log.warn(
+        `web_search: ignoring unresolved configured SecretRef at ${path}; ` +
+          "falling back to ARK_SEARCH_API_KEY environment resolution",
+      );
+      return undefined;
+    }
+    throw err;
+  }
+}
+
 export async function executeByteDanceWebSearchProviderTool(
   ctx: { config?: Record<string, unknown>; searchConfig?: SearchConfigRecord },
   args: Record<string, unknown>,
@@ -324,7 +371,7 @@ export async function executeByteDanceWebSearchProviderTool(
     { mirrorApiKeyToTopLevel: true },
   ) as SearchConfigRecord | undefined;
 
-  const explicitApiKey = readConfiguredSecretString(
+  const explicitApiKey = readOptionalConfiguredSecretString(
     searchConfig?.apiKey,
     "tools.web.search.apiKey",
   );
@@ -457,5 +504,6 @@ export const __testing = {
   buildPayload,
   normalizeReference,
   extractReferences,
+  runAskEchoSearch,
   SEARCH_PATH,
 };

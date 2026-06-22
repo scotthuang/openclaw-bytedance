@@ -17,10 +17,52 @@ const repoRoot =
   process.env.OPENCLAW_REPO?.trim() || join(homedir(), "github", "openclaw");
 
 const sdkDir = resolve(repoRoot, "src", "plugin-sdk");
+const packagesDir = resolve(repoRoot, "packages");
+const fsSafeDistDir = resolve(repoRoot, "node_modules", "@openclaw", "fs-safe", "dist");
+const proxylineDistDir = resolve(repoRoot, "node_modules", "@openclaw", "proxyline", "dist");
 const haveSdk = existsSync(sdkDir);
+const havePackages = existsSync(packagesDir);
+const haveFsSafe = existsSync(fsSafeDistDir);
+const haveProxyline = existsSync(proxylineDistDir);
 
 const sdkAliases = haveSdk
   ? [
+      ...(haveProxyline
+        ? [
+            {
+              find: /^@openclaw\/proxyline\/(.+)$/,
+              replacement: resolve(proxylineDistDir, "$1.js"),
+            },
+            {
+              find: /^@openclaw\/proxyline$/,
+              replacement: resolve(proxylineDistDir, "index.js"),
+            },
+          ]
+        : []),
+      ...(haveFsSafe
+        ? [
+            {
+              find: /^@openclaw\/fs-safe\/(.+)$/,
+              replacement: resolve(fsSafeDistDir, "$1.js"),
+            },
+            {
+              find: /^@openclaw\/fs-safe$/,
+              replacement: resolve(fsSafeDistDir, "index.js"),
+            },
+          ]
+        : []),
+      ...(havePackages
+        ? [
+            {
+              find: /^@openclaw\/([^/]+)\/(.+)$/,
+              replacement: resolve(packagesDir, "$1", "src", "$2.ts"),
+            },
+            {
+              find: /^@openclaw\/([^/]+)$/,
+              replacement: resolve(packagesDir, "$1", "src", "index.ts"),
+            },
+          ]
+        : []),
       // Map specific subpaths first; vitest matches in declaration order.
       {
         find: /^openclaw\/plugin-sdk\/provider-http$/,

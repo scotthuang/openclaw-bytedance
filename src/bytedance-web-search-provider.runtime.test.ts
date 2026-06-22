@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { __testing } from "./bytedance-web-search-provider.runtime.js";
+import {
+  __testing,
+  executeByteDanceWebSearchProviderTool,
+} from "./bytedance-web-search-provider.runtime.js";
 
 const {
   resolveSearchType,
@@ -10,6 +13,7 @@ const {
   buildPayload,
   normalizeReference,
   extractReferences,
+  runAskEchoSearch,
   SEARCH_PATH,
 } = __testing;
 
@@ -102,14 +106,26 @@ describe("bytedance web search runtime — pure helpers", () => {
       const p = buildPayload({ Query: "x", SearchType: "image", Count: 3 });
       expect(p).not.toHaveProperty("NeedSummary");
     });
-    it("includes Filter only when provided (web)", () => {
+    it("includes demo-style Filter defaults for web", () => {
+      const p = buildPayload({ Query: "x", SearchType: "web", Count: 5 });
+      expect(p.Filter).toEqual({
+        NeedContent: false,
+        NeedUrl: true,
+        AuthInfoLevel: 0,
+      });
+    });
+    it("preserves configured auth level in web Filter", () => {
       const p = buildPayload({
         Query: "x",
         SearchType: "web",
         Count: 5,
         Filter: { AuthInfoLevel: 1 },
       });
-      expect(p.Filter).toEqual({ AuthInfoLevel: 1 });
+      expect(p.Filter).toEqual({
+        NeedContent: false,
+        NeedUrl: true,
+        AuthInfoLevel: 1,
+      });
     });
     it("includes TimeRange only when provided (web)", () => {
       const p = buildPayload({
@@ -127,6 +143,11 @@ describe("bytedance web search runtime — pure helpers", () => {
         SearchType: "web",
         Count: 3,
         NeedSummary: true,
+        Filter: {
+          NeedContent: false,
+          NeedUrl: true,
+          AuthInfoLevel: 0,
+        },
       });
     });
   });
@@ -240,5 +261,51 @@ describe("bytedance web search runtime — pure helpers", () => {
       expect(extractReferences({}, "web", 10)).toEqual([]);
       expect(extractReferences({ Result: {} }, "web", 10)).toEqual([]);
     });
+  });
+});
+
+const runLiveSearch = process.env.RUN_ARK_SEARCH_LIVE_TEST === "1";
+const describeLive = runLiveSearch ? describe : describe.skip;
+
+describeLive("bytedance web search runtime — live Volcengine API", () => {
+  it("runs the same API-key web payload shape as the Volcengine Python demo", async () => {
+    const apiKey = process.env.ARK_SEARCH_API_KEY;
+    expect(apiKey, "ARK_SEARCH_API_KEY must be present for live search test").toBeTruthy();
+
+    const data = await runAskEchoSearch({
+      apiKey: apiKey!,
+      baseUrl: "https://open.feedcoopapi.com",
+      timeoutSeconds: 30,
+      body: {
+        Query: "深圳明天天气",
+        SearchType: "web",
+        Count: 3,
+        NeedSummary: true,
+        Filter: {
+          NeedContent: true,
+          NeedUrl: false,
+          Sites: "",
+          BlockHosts: "",
+          AuthInfoLevel: 0,
+        },
+      },
+    });
+
+    expect(data.ResponseMetadata?.Error).toBeUndefined();
+    expect(data.Result?.ResultCount).toBeGreaterThan(0);
+    expect(data.Result?.WebResults?.length).toBeGreaterThan(0);
+  });
+
+  it("returns normalized OpenClaw provider results from the runtime tool", async () => {
+    const result = await executeByteDanceWebSearchProviderTool(
+      {},
+      { query: "深圳明天天气", searchType: "web", count: 3 },
+    );
+
+    expect(result.provider).toBe("bytedance");
+    expect(result.searchType).toBe("web");
+    expect(result.count).toBeGreaterThan(0);
+    expect(Array.isArray(result.results)).toBe(true);
+    expect((result.results as unknown[]).length).toBeGreaterThan(0);
   });
 });

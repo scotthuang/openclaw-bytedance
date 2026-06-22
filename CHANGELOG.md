@@ -6,6 +6,33 @@ file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.6] - 2026-06-22
+
+### Fixed
+
+- **web_search:** tolerate unresolved OpenClaw SecretRef values for
+  `plugins.entries.bytedance.config.webSearch.apiKey` during local capability
+  execution, then fall back to the real `ARK_SEARCH_API_KEY` environment
+  variable instead of failing before the Volcengine request is sent.
+- **web_search:** surface Volcengine `ResponseMetadata.Error` envelopes as
+  explicit provider errors instead of treating HTTP 200 responses with no
+  result data as empty searches.
+- **web_search:** send a demo-compatible web `Filter` payload
+  (`NeedContent`, `NeedUrl`, `AuthInfoLevel`) while keeping `SearchType: "web"`
+  for users without `web_summary` permission.
+
+### Removed
+
+- Removed the bundled hardcoded fallback search API key. Search now uses only
+  explicit config or the documented search env vars, so calls do not silently
+  bypass the user's `ARK_SEARCH_API_KEY`.
+
+### Tests
+
+- Added opt-in live Volcengine search tests gated by
+  `RUN_ARK_SEARCH_LIVE_TEST=1`, covering both the Python-demo-equivalent API
+  payload and the normalized OpenClaw provider result shape.
+
 ## [0.1.5] - 2026-06-15
 
 ### Added
@@ -103,7 +130,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   time-range validation, count clamping, response parsing, request shape,
   data URL formatting, and error handling (67 tests).
 
-[Unreleased]: https://github.com/scotthuang/openclaw-bytedance/compare/v0.1.5...HEAD
+[Unreleased]: https://github.com/scotthuang/openclaw-bytedance/compare/v0.1.6...HEAD
+[0.1.6]: https://github.com/scotthuang/openclaw-bytedance/compare/v0.1.5...v0.1.6
 [0.1.5]: https://github.com/scotthuang/openclaw-bytedance/compare/v0.1.2...v0.1.5
 [0.1.2]: https://github.com/scotthuang/openclaw-bytedance/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/scotthuang/openclaw-bytedance/compare/v0.1.0...v0.1.1
